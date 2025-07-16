@@ -17,7 +17,7 @@ interface AssessmentFlowProps {
 export interface AssessmentData {
   psychometric: Record<string, number>;
   technical: Record<string, any>;
-  wiscar: Record<string, number>;
+  wiscar: Record<string, any>;
 }
 
 export const AssessmentFlow = ({ onBack }: AssessmentFlowProps) => {
@@ -57,6 +57,21 @@ export const AssessmentFlow = ({ onBack }: AssessmentFlowProps) => {
   };
 
   const CurrentComponent = steps[currentStep].component;
+
+  const getComponentProps = () => {
+    const baseProps = {
+      onNext: handleNext,
+      assessmentData,
+      canGoBack: currentStep > 0
+    };
+
+    // Only add onPrevious for components that need it
+    if (currentStep > 0 && currentStep < steps.length - 1) {
+      return { ...baseProps, onPrevious: handlePrevious };
+    }
+
+    return baseProps;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
@@ -101,12 +116,7 @@ export const AssessmentFlow = ({ onBack }: AssessmentFlowProps) => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <CurrentComponent 
-              onNext={handleNext}
-              onPrevious={handlePrevious}
-              assessmentData={assessmentData}
-              canGoBack={currentStep > 0}
-            />
+            <CurrentComponent {...getComponentProps()} />
           </CardContent>
         </Card>
       </div>

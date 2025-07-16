@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,8 +6,15 @@ import { Progress } from "@/components/ui/progress";
 import { ArrowRight, Target, Star, Brain, Lightbulb, Users, Compass } from "lucide-react";
 
 interface WiscarSectionProps {
-  onNext: (data: Record<string, number>) => void;
+  onNext: (data: Record<string, any>) => void;
   canGoBack: boolean;
+}
+
+interface Question {
+  id: string;
+  text: string;
+  type: string;
+  options?: string[];
 }
 
 const wiscarDimensions = [
@@ -29,7 +35,7 @@ const wiscarDimensions = [
         text: "When I start a coding project, I usually finish it even if it takes longer than expected.",
         type: "likert"
       }
-    ]
+    ] as Question[]
   },
   {
     code: "I",
@@ -48,7 +54,7 @@ const wiscarDimensions = [
         text: "I find myself reading about web development trends in my free time.",
         type: "likert"
       }
-    ]
+    ] as Question[]
   },
   {
     code: "S",
@@ -69,7 +75,7 @@ const wiscarDimensions = [
         type: "confidence", 
         options: ["No experience", "Beginner", "Some experience", "Comfortable", "Advanced"]
       }
-    ]
+    ] as Question[]
   },
   {
     code: "C",
@@ -88,7 +94,7 @@ const wiscarDimensions = [
         text: "I enjoy figuring out why something isn't working and finding the solution.",
         type: "likert"
       }
-    ]
+    ] as Question[]
   },
   {
     code: "A",
@@ -107,7 +113,7 @@ const wiscarDimensions = [
         text: "I can identify my own learning strengths and weaknesses.",
         type: "likert"
       }
-    ]
+    ] as Question[]
   },
   {
     code: "R",
@@ -128,7 +134,7 @@ const wiscarDimensions = [
         type: "scenario",
         options: ["Not appealing", "Slightly appealing", "Moderately appealing", "Very appealing", "Extremely appealing"]
       }
-    ]
+    ] as Question[]
   }
 ];
 

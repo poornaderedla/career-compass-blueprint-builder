@@ -2,9 +2,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 import { Progress } from "@/components/ui/progress";
-import { ArrowRight, Code, Timer } from "lucide-react";
+import { ArrowRight, Code } from "lucide-react";
 
 interface TechnicalSectionProps {
   onNext: (data: Record<string, any>) => void;
@@ -92,192 +93,101 @@ const sections = [
   }
 ];
 
-export const TechnicalSection = ({ onNext, canGoBack }: TechnicalSectionProps) => {
-  const [responses, setResponses] = useState<Record<string, number>>({});
-  const [currentSection, setCurrentSection] = useState(0);
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [timeSpent, setTimeSpent] = useState(0);
+export const TechnicalSection = ({ onNext }: TechnicalSectionProps) => {
+  const allQuestions = sections.flatMap((sec, secIdx) => 
+    sec.questions.map((q, qIdx) => ({ ...q, qIndex: qIdx, secIndex: secIdx }))
+  );
+  
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [answers, setAnswers] = useState<Record<string, number>>({});
+  
+  const currentQuestion = allQuestions[currentQuestionIndex];
+  const progress = ((currentQuestionIndex + 1) / allQuestions.length) * 100;
 
-  const allQuestions = sections.flatMap(section => section.questions);
-  const totalQuestions = allQuestions.length;
-  const progress = (Object.keys(responses).length / totalQuestions) * 100;
-  const isComplete = Object.keys(responses).length === totalQuestions;
-
-  const currentQ = sections[currentSection].questions[currentQuestion];
-
-  const handleResponse = (questionId: string, optionIndex: number) => {
-    setResponses(prev => ({ ...prev, [questionId]: optionIndex }));
-    
-    // Auto-advance to next question
-    setTimeout(() => {
-      if (currentQuestion < sections[currentSection].questions.length - 1) {
-        setCurrentQuestion(prev => prev + 1);
-      } else if (currentSection < sections.length - 1) {
-        setCurrentSection(prev => prev + 1);
-        setCurrentQuestion(0);
-      }
-    }, 500);
-  };
-
-  const calculateScore = () => {
-    let correct = 0;
-    let total = 0;
-    
-    sections.forEach(section => {
-      section.questions.forEach(question => {
-        total++;
-        if (responses[question.id] === question.correct) {
-          correct++;
-        }
-      });
-    });
-    
-    return Math.round((correct / total) * 100);
+  const handleAnswerChange = (value: string) => {
+    setAnswers(prev => ({
+      ...prev,
+      [currentQuestion.id]: parseInt(value)
+    }));
   };
 
   const handleNext = () => {
-    if (isComplete) {
-      const score = calculateScore();
-      onNext({ 
-        responses, 
-        score, 
-        timeSpent,
-        sectionalScores: sections.map(section => {
-          let sectionCorrect = 0;
-          let sectionTotal = section.questions.length;
-          
-          section.questions.forEach(question => {
-            if (responses[question.id] === question.correct) {
-              sectionCorrect++;
-            }
-          });
-          
-          return {
-            section: section.title,
-            score: Math.round((sectionCorrect / sectionTotal) * 100)
-          };
-        })
+    if (currentQuestionIndex < allQuestions.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
+    } else {
+      let correct = 0;
+      allQuestions.forEach(q => {
+        if (answers[q.id] === q.correct) {
+          correct++;
+        }
       });
+      const score = Math.round((correct / allQuestions.length) * 100);
+      onNext({ answers, score });
     }
   };
 
+  const canProceed = answers[currentQuestion.id] !== undefined;
+  const isLastQuestion = currentQuestionIndex === allQuestions.length - 1;
+
   return (
-    <div className="space-y-6">
-      {/* Section Header */}
-      <div className="text-center mb-8">
-        <Badge className="mb-4 bg-green-100 text-green-700">
-          3️⃣ TECHNICAL & APTITUDE SECTION
-        </Badge>
-        <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center justify-center gap-2">
-          <Code className="w-8 h-8 text-green-600" />
-          🧠 Technical Readiness Assessment
-        </h2>
-        <p className="text-gray-600 max-w-2xl mx-auto">
-          Assess your logical reasoning, programming aptitude, and Python-specific knowledge 
-          to determine your technical readiness for Full Stack Python development.
-        </p>
-      </div>
-
-      {/* Progress */}
-      <div className="mb-6">
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-sm font-medium text-gray-600">
-            Question {Object.keys(responses).length + 1} of {totalQuestions}
-          </span>
-          <span className="text-sm font-medium text-gray-600 flex items-center gap-1">
-            <Timer className="w-4 h-4" />
-            Section: {sections[currentSection].title}
-          </span>
-        </div>
-        <Progress value={progress} className="h-3" />
-      </div>
-
-      {/* Section Info */}
-      <Card className="border-2 border-green-200 bg-green-50 mb-6">
+    <div className="max-w-3xl mx-auto">
+      <Card className="border-2 border-green-200">
         <CardHeader>
-          <CardTitle className="text-green-800 text-lg">
-            {sections[currentSection].title}
+          <CardTitle className="flex items-center space-x-2">
+            <Code className="w-6 h-6 text-green-600" />
+            <span>Technical Aptitude Assessment</span>
           </CardTitle>
-          <p className="text-green-700">{sections[currentSection].description}</p>
-        </CardHeader>
-      </Card>
-
-      {/* Current Question */}
-      <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <Badge variant="outline" className="text-blue-700 border-blue-300">
-              Question {currentQuestion + 1} of {sections[currentSection].questions.length}
-            </Badge>
-            <span className="text-sm text-gray-500">
-              {sections[currentSection].title}
-            </span>
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm text-gray-600">
+              <span>Question {currentQuestionIndex + 1} of {allQuestions.length}</span>
+              <span>{Math.round(progress)}% Complete</span>
+            </div>
+            <Progress value={progress} className="h-2" />
           </div>
         </CardHeader>
-        <CardContent>
-          <h3 className="text-xl font-semibold text-gray-900 mb-6">
-            {currentQ.text}
-          </h3>
-          
-          <div className="space-y-3">
-            {currentQ.options.map((option, index) => (
-              <Button
-                key={index}
-                variant={responses[currentQ.id] === index ? "default" : "outline"}
-                className={`w-full p-4 h-auto justify-start text-left transition-all ${
-                  responses[currentQ.id] === index 
-                    ? "bg-blue-600 text-white hover:bg-blue-700" 
-                    : "hover:border-blue-300 hover:bg-blue-50"
-                }`}
-                onClick={() => handleResponse(currentQ.id, index)}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-sm font-bold ${
-                    responses[currentQ.id] === index 
-                      ? "border-white text-white" 
-                      : "border-blue-300 text-blue-600"
-                  }`}>
-                    {String.fromCharCode(65 + index)}
-                  </div>
-                  <span className="font-medium whitespace-pre-line">{option}</span>
+        <CardContent className="space-y-6">
+          <div className="bg-green-50 p-4 rounded-lg">
+            <div className="text-sm font-medium text-green-700 mb-2">
+              {sections[currentQuestion.secIndex].title}
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 whitespace-pre-line">
+              {currentQuestion.text}
+            </h3>
+            
+            <RadioGroup
+              value={answers[currentQuestion.id]?.toString() || ''}
+              onValueChange={handleAnswerChange}
+              className="space-y-3"
+            >
+              {currentQuestion.options.map((option, index) => (
+                <div key={index} className="flex items-center space-x-2">
+                  <RadioGroupItem value={index.toString()} id={`option-${index}`} />
+                  <Label 
+                    htmlFor={`option-${index}`} 
+                    className="text-sm cursor-pointer flex-1 py-2 px-3 rounded hover:bg-white/50 transition-colors"
+                  >
+                    {option}
+                  </Label>
                 </div>
-              </Button>
-            ))}
+              ))}
+            </RadioGroup>
+          </div>
+
+          <div className="flex justify-between items-center">
+            <div className="text-sm text-gray-500">
+              Category: {sections[currentQuestion.secIndex].title}
+            </div>
+            <Button 
+              onClick={handleNext}
+              disabled={!canProceed}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {isLastQuestion ? 'Complete Section' : 'Next Question'}
+              <ArrowRight className="ml-2 w-4 h-4" />
+            </Button>
           </div>
         </CardContent>
       </Card>
-
-      {/* Section Progress */}
-      <div className="flex justify-center space-x-4">
-        {sections.map((section, sectionIndex) => (
-          <div key={sectionIndex} className="text-center">
-            <div className={`w-4 h-4 rounded-full mx-auto mb-1 ${
-              sectionIndex < currentSection ? 'bg-green-500' :
-              sectionIndex === currentSection ? 'bg-blue-500' : 'bg-gray-300'
-            }`} />
-            <span className="text-xs text-gray-600">{section.title.split('.')[0]}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* Next Button */}
-      {isComplete && (
-        <div className="text-center">
-          <div className="mb-4 p-4 bg-green-50 rounded-lg border border-green-200">
-            <p className="text-green-800 font-semibold">
-              Technical Assessment Complete! Score: {calculateScore()}%
-            </p>
-          </div>
-          <Button 
-            onClick={handleNext}
-            size="lg" 
-            className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white px-8 py-4"
-          >
-            Continue to WISCAR Framework
-            <ArrowRight className="w-5 h-5 ml-2" />
-          </Button>
-        </div>
-      )}
     </div>
   );
 };
